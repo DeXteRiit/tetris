@@ -123,6 +123,6 @@ def move_right(event):
 canvas.bind_all("<Left>", move_left)
 canvas.bind_all("<Right>", move_right)
 
-game_loop()
-
-canvas.mainloop()
+if __name__ == "__main__":
+    game_loop()
+    canvas.mainloop()
