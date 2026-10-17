@@ -53,8 +53,40 @@ class Long_piece(Piece):
             self.blocks.append(Block(col_pos - 2 + i, row_pos, color))
 
 
+class L_block(Piece):
+    def __init__(self, col_pos, row_pos, color):
+        super().__init__(col_pos, row_pos, color)
+        for i in range(3):
+            self.blocks.append(Block(col_pos - 1 + i, row_pos + 1, color))
+        self.blocks.append(Block(col_pos + 1, row_pos, color))
+
+
+class J_block(Piece):
+    def __init__(self, col_pos, row_pos, color):
+        super().__init__(col_pos, row_pos, color)
+        for i in range(3):
+            self.blocks.append(Block(col_pos - 1 + i, row_pos, color))
+        self.blocks.append(Block(col_pos + 1, row_pos + 1, color))
+
+
+class S_block(Piece):
+    def __init__(self, col_pos, row_pos, color):
+        super().__init__(col_pos, row_pos, color)
+        for i in range(2):
+            self.blocks.append(Block(col_pos - i, row_pos + i, color))
+            self.blocks.append(Block(col_pos + 1 - i, row_pos + i, color))
+
+
+class Z_block(Piece):
+    def __init__(self, col_pos, row_pos, color):
+        super().__init__(col_pos, row_pos, color)
+        for i in range(2):
+            self.blocks.append(Block(col_pos + i, row_pos + i, color))
+            self.blocks.append(Block(col_pos + 1 + i, row_pos + i, color))
+
+
 colors = ("blue", "red", "yellow", "green", "purple")
-block_types = (Square_piece, Long_piece)
+block_types = (Square_piece, Long_piece, L_block, J_block, S_block, Z_block)
 active_piece = random.choice(block_types)(cols // 2, 0, random.choice(colors))
 block_grid = [
     [0 for _ in range(cols)] for _ in range(rows)
