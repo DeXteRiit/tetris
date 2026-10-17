@@ -1,4 +1,4 @@
-from tetris import block_grid, width, height, size
+from tetris import block_grid
 
 
 def test_block_grid_cell_independency():
