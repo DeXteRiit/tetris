@@ -26,7 +26,9 @@ class Block:
         self.row_pos += offset_row
         canvas.move(self.id, offset_col * size, offset_row * size)
 
-    def update_pos(self):
+    def moveto(self, col_pos, row_pos):
+        self.col_pos = col_pos
+        self.row_pos = row_pos
         canvas.moveto(self.id, self.col_pos * size, self.row_pos * size)
 
 
@@ -36,6 +38,12 @@ class Piece:
         self.row_pos = row_pos
         self.color = color
         self.blocks = []
+
+    def move(self, offset_col, offset_row):
+        self.col_pos += offset_col
+        self.row_pos += offset_row
+        for block in self.blocks:
+            block.move(offset_col, offset_row)
 
 
 class Square_piece(Piece):
@@ -125,22 +133,38 @@ def clear_lines():
         sync_with_grid()
 
 
-def fall():
-    global active_piece
-    fallable = True
+def can_move_in_dir(offset_col, offset_row):
+    for block in active_piece.blocks:
+        next_col = block.col_pos + offset_col
+        next_row = block.row_pos + offset_row
+        if next_col < 0 or next_col >= cols or next_row < 0 or next_row >= rows:
+            return False
+        if block_grid[next_row][next_col] != 0:
+            return False
+
+    return True
+
+
+def can_fall():
 
     for block in active_piece.blocks:
-        if (
-            block.row_pos + 1 >= len(block_grid)
-            or block_grid[block.row_pos + 1][block.col_pos] != 0
-        ):
-            fallable = False
-            break
+        if block.row_pos + 1 >= rows or not can_move_in_dir(0, 1):
+            return False
+    return True
 
-    if fallable:
-        for block in active_piece.blocks:
-            block.move(0, 1)
-        active_piece.row_pos += 1
+
+def is_game_over():
+
+    for block in active_piece.blocks:
+        if not can_move_in_dir(0, 0):
+            return True
+    return False
+
+
+def fall():
+    global active_piece
+    if can_fall():
+        active_piece.move(0, 1)
     else:
         for block in active_piece.blocks:
             block_grid[block.row_pos][block.col_pos] = block.id
@@ -149,51 +173,62 @@ def fall():
 
 
 def game_loop():
-    fall()
+    global block_grid
+
+    if is_game_over():
+        for row in block_grid:
+            for id in row:
+                canvas.delete(id)
+        block_grid = [[0 for _ in range(cols)] for _ in range(rows)]
+    else:
+        fall()
 
     canvas.after(500, game_loop)
 
 
 def move_left(event):
-    moveble = True
-    for block in active_piece.blocks:
-        if block.col_pos <= 0 or block_grid[block.row_pos][block.col_pos - 1] != 0:
-            moveble = False
-            break
-    if moveble:
-        for block in active_piece.blocks:
-            block.move(-1, 0)
-        active_piece.col_pos -= 1
+    if can_move_in_dir(-1, 0):
+        active_piece.move(-1, 0)
 
 
 def move_right(event):
-    moveble = True
-    for block in active_piece.blocks:
-        if (
-            block.col_pos >= cols - 1
-            or block_grid[block.row_pos][block.col_pos - 1] != 0
-        ):
-            moveble = False
-            break
-    if moveble:
-        for block in active_piece.blocks:
-            block.move(1, 0)
-        active_piece.col_pos += 1
+    if can_move_in_dir(1, 0):
+        active_piece.move(1, 0)
 
 
 def drop(event):
-    last_piece = active_piece
-    while last_piece == active_piece:
-        fall()
+    if not is_game_over():
+        last_piece = active_piece
+        while last_piece == active_piece:
+            fall()
 
 
-def rotate(even):
+def can_rotate():
     for block in active_piece.blocks:
         offsetX = block.col_pos - active_piece.col_pos
         offsetY = block.row_pos - active_piece.row_pos
-        block.col_pos = active_piece.col_pos + offsetY
-        block.row_pos = active_piece.row_pos - offsetX
-        block.update_pos()
+        new_col_pos = active_piece.col_pos + offsetY
+        new_row_pos = active_piece.row_pos - offsetX
+        if (
+            new_col_pos < 0
+            or new_col_pos >= cols
+            or new_row_pos < 0
+            or new_row_pos >= rows
+        ):
+            return False
+        if block_grid[new_row_pos][new_col_pos] != 0:
+            return False
+    return True
+
+
+def rotate(even):
+    if can_rotate():
+        for block in active_piece.blocks:
+            offsetX = block.col_pos - active_piece.col_pos
+            offsetY = block.row_pos - active_piece.row_pos
+            new_col_pos = active_piece.col_pos + offsetY
+            new_row_pos = active_piece.row_pos - offsetX
+            block.moveto(new_col_pos, new_row_pos)
 
 
 canvas.bind_all("<Left>", move_left)
