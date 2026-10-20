@@ -109,6 +109,15 @@ def sync_with_grid():
                 canvas.moveto(id, col_index * size, row_index * size)
 
 
+def clear_grid():
+    global block_grid
+    for row in block_grid:
+        for id in row:
+            if id != 0:
+                canvas.delete(id)
+    block_grid = [[0 for _ in range(cols)] for _ in range(rows)]
+
+
 def clear_lines():
     global block_grid
     lines_cleared = 0
@@ -173,13 +182,9 @@ def fall():
 
 
 def game_loop():
-    global block_grid
 
     if is_game_over():
-        for row in block_grid:
-            for id in row:
-                canvas.delete(id)
-        block_grid = [[0 for _ in range(cols)] for _ in range(rows)]
+        clear_grid()
     else:
         fall()
 
