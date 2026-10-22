@@ -50,8 +50,10 @@ class Square_piece(Piece):
     def __init__(self, col_pos, row_pos, color):
         super().__init__(col_pos, row_pos, color)
         for i in range(2):
-            self.blocks.append(Block(col_pos, i, color))
-            self.blocks.append(Block(col_pos + 1, i, color))
+            self.blocks.append(Block(col_pos - 1, row_pos - i, color))
+            self.blocks.append(Block(col_pos, row_pos - i, color))
+        self.col_pos -= 0.5
+        self.row_pos -= 0.5
 
 
 class Long_piece(Piece):
@@ -81,21 +83,29 @@ class S_block(Piece):
     def __init__(self, col_pos, row_pos, color):
         super().__init__(col_pos, row_pos, color)
         for i in range(2):
-            self.blocks.append(Block(col_pos - i, row_pos + i, color))
-            self.blocks.append(Block(col_pos + 1 - i, row_pos + i, color))
+            self.blocks.append(Block(col_pos - i, row_pos - i, color))
+            self.blocks.append(Block(col_pos + 1 - i, row_pos - i, color))
 
 
 class Z_block(Piece):
     def __init__(self, col_pos, row_pos, color):
         super().__init__(col_pos, row_pos, color)
         for i in range(2):
-            self.blocks.append(Block(col_pos + i, row_pos + i, color))
-            self.blocks.append(Block(col_pos + 1 + i, row_pos + i, color))
+            self.blocks.append(Block(col_pos + i, row_pos - i, color))
+            self.blocks.append(Block(col_pos + 1 + i, row_pos - i, color))
+
+
+class T_block(Piece):
+    def __init__(self, col_pos, row_pos, color):
+        super().__init__(col_pos, row_pos, color)
+        for i in range(3):
+            self.blocks.append(Block(col_pos - 1 + i, row_pos, color))
+        self.blocks.append(Block(col_pos, row_pos - 1, color))
 
 
 colors = ("blue", "red", "yellow", "green", "purple")
-block_types = (Square_piece, Long_piece, L_block, J_block, S_block, Z_block)
-active_piece = random.choice(block_types)(cols // 2, 0, random.choice(colors))
+block_types = (Square_piece, Long_piece, L_block, J_block, S_block, Z_block, T_block)
+active_piece = random.choice(block_types)(cols // 2, 1, random.choice(colors))
 block_grid = [
     [0 for _ in range(cols)] for _ in range(rows)
 ]  # creates 2d list with [row][col] [[0 for _ in range(2)] for _ in range(3)] == [[0,0], [0,0], [0,0]]
@@ -178,7 +188,8 @@ def fall():
         for block in active_piece.blocks:
             block_grid[block.row_pos][block.col_pos] = block.id
         clear_lines()
-        active_piece = random.choice(block_types)(cols // 2, 0, random.choice(colors))
+        active_piece = random.choice(block_types)(cols // 2, 1, random.choice(colors))
+        # active_piece = Long_piece(cols // 2, 0, random.choice(colors))
 
 
 def game_loop():
@@ -212,8 +223,8 @@ def can_rotate():
     for block in active_piece.blocks:
         offsetX = block.col_pos - active_piece.col_pos
         offsetY = block.row_pos - active_piece.row_pos
-        new_col_pos = active_piece.col_pos + offsetY
-        new_row_pos = active_piece.row_pos - offsetX
+        new_col_pos = int(active_piece.col_pos + offsetY)
+        new_row_pos = int(active_piece.row_pos - offsetX)
         if (
             new_col_pos < 0
             or new_col_pos >= cols
@@ -231,8 +242,8 @@ def rotate(even):
         for block in active_piece.blocks:
             offsetX = block.col_pos - active_piece.col_pos
             offsetY = block.row_pos - active_piece.row_pos
-            new_col_pos = active_piece.col_pos + offsetY
-            new_row_pos = active_piece.row_pos - offsetX
+            new_col_pos = int(active_piece.col_pos + offsetY)
+            new_row_pos = int(active_piece.row_pos - offsetX)
             block.moveto(new_col_pos, new_row_pos)
 
 
