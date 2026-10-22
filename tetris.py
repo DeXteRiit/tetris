@@ -1,122 +1,27 @@
 import random
 import tkinter
 
-rows = 20
-cols = 10
-size = 50
-canvas = tkinter.Canvas(width=cols * size, height=rows * size, bg="black")
+import pieces
+from constants import *
+
+canvas = tkinter.Canvas(width=COLS * SIZE, height=ROWS * SIZE, bg="black")
+
 canvas.pack()
+pieces.init_canvas(canvas)
 
-
-class Block:
-    def __init__(self, col_pos, row_pos, color):
-        self.col_pos = col_pos
-        self.row_pos = row_pos
-        self.color = color
-        self.id = canvas.create_rectangle(
-            col_pos * size,
-            row_pos * size,
-            col_pos * size + size,
-            row_pos * size + size,
-            fill=color,
-        )
-
-    def move(self, offset_col, offset_row):
-        self.col_pos += offset_col
-        self.row_pos += offset_row
-        canvas.move(self.id, offset_col * size, offset_row * size)
-
-    def moveto(self, col_pos, row_pos):
-        self.col_pos = col_pos
-        self.row_pos = row_pos
-        canvas.moveto(self.id, self.col_pos * size, self.row_pos * size)
-
-
-class Piece:
-    def __init__(self, col_pos, row_pos, color):
-        self.col_pos = col_pos
-        self.row_pos = row_pos
-        self.color = color
-        self.blocks = []
-
-    def move(self, offset_col, offset_row):
-        self.col_pos += offset_col
-        self.row_pos += offset_row
-        for block in self.blocks:
-            block.move(offset_col, offset_row)
-
-
-class Square_piece(Piece):
-    def __init__(self, col_pos, row_pos, color):
-        super().__init__(col_pos, row_pos, color)
-        for i in range(2):
-            self.blocks.append(Block(col_pos - 1, row_pos - i, color))
-            self.blocks.append(Block(col_pos, row_pos - i, color))
-        self.col_pos -= 0.5
-        self.row_pos -= 0.5
-
-
-class Long_piece(Piece):
-    def __init__(self, col_pos, row_pos, color):
-        super().__init__(col_pos, row_pos, color)
-        for i in range(4):
-            self.blocks.append(Block(col_pos - 2 + i, row_pos, color))
-
-
-class L_block(Piece):
-    def __init__(self, col_pos, row_pos, color):
-        super().__init__(col_pos, row_pos, color)
-        for i in range(3):
-            self.blocks.append(Block(col_pos - 1 + i, row_pos + 1, color))
-        self.blocks.append(Block(col_pos + 1, row_pos, color))
-
-
-class J_block(Piece):
-    def __init__(self, col_pos, row_pos, color):
-        super().__init__(col_pos, row_pos, color)
-        for i in range(3):
-            self.blocks.append(Block(col_pos - 1 + i, row_pos, color))
-        self.blocks.append(Block(col_pos + 1, row_pos + 1, color))
-
-
-class S_block(Piece):
-    def __init__(self, col_pos, row_pos, color):
-        super().__init__(col_pos, row_pos, color)
-        for i in range(2):
-            self.blocks.append(Block(col_pos - i, row_pos - i, color))
-            self.blocks.append(Block(col_pos + 1 - i, row_pos - i, color))
-
-
-class Z_block(Piece):
-    def __init__(self, col_pos, row_pos, color):
-        super().__init__(col_pos, row_pos, color)
-        for i in range(2):
-            self.blocks.append(Block(col_pos + i, row_pos - i, color))
-            self.blocks.append(Block(col_pos + 1 + i, row_pos - i, color))
-
-
-class T_block(Piece):
-    def __init__(self, col_pos, row_pos, color):
-        super().__init__(col_pos, row_pos, color)
-        for i in range(3):
-            self.blocks.append(Block(col_pos - 1 + i, row_pos, color))
-        self.blocks.append(Block(col_pos, row_pos - 1, color))
-
-
-colors = ("blue", "red", "yellow", "green", "purple")
-block_types = (Square_piece, Long_piece, L_block, J_block, S_block, Z_block, T_block)
-active_piece = random.choice(block_types)(cols // 2, 1, random.choice(colors))
+block_types = tuple(pieces.Piece.__subclasses__())
+active_piece = random.choice(block_types)(COLS // 2, 1, random.choice(COLORS))
 block_grid = [
-    [0 for _ in range(cols)] for _ in range(rows)
+    [0 for _ in range(COLS)] for _ in range(ROWS)
 ]  # creates 2d list with [row][col] [[0 for _ in range(2)] for _ in range(3)] == [[0,0], [0,0], [0,0]]
 
 
 def sync_with_grid():
-    for row_index in range(rows):
-        for col_index in range(cols):
+    for row_index in range(ROWS):
+        for col_index in range(COLS):
             id = block_grid[row_index][col_index]
             if id != 0:
-                canvas.moveto(id, col_index * size, row_index * size)
+                canvas.moveto(id, col_index * SIZE, row_index * SIZE)
 
 
 def clear_grid():
@@ -125,7 +30,7 @@ def clear_grid():
         for id in row:
             if id != 0:
                 canvas.delete(id)
-    block_grid = [[0 for _ in range(cols)] for _ in range(rows)]
+    block_grid = [[0 for _ in range(COLS)] for _ in range(ROWS)]
 
 
 def clear_lines():
@@ -146,7 +51,7 @@ def clear_lines():
 
     if lines_cleared > 0:
         for _ in range(lines_cleared):
-            empty = [0 for _ in range(cols)]
+            empty = [0 for _ in range(COLS)]
             new_grid.insert(0, empty)
         block_grid = new_grid
         sync_with_grid()
@@ -156,7 +61,7 @@ def can_move_in_dir(offset_col, offset_row):
     for block in active_piece.blocks:
         next_col = block.col_pos + offset_col
         next_row = block.row_pos + offset_row
-        if next_col < 0 or next_col >= cols or next_row < 0 or next_row >= rows:
+        if next_col < 0 or next_col >= COLS or next_row < 0 or next_row >= ROWS:
             return False
         if block_grid[next_row][next_col] != 0:
             return False
@@ -167,7 +72,7 @@ def can_move_in_dir(offset_col, offset_row):
 def can_fall():
 
     for block in active_piece.blocks:
-        if block.row_pos + 1 >= rows or not can_move_in_dir(0, 1):
+        if block.row_pos + 1 >= ROWS or not can_move_in_dir(0, 1):
             return False
     return True
 
@@ -188,8 +93,8 @@ def fall():
         for block in active_piece.blocks:
             block_grid[block.row_pos][block.col_pos] = block.id
         clear_lines()
-        active_piece = random.choice(block_types)(cols // 2, 1, random.choice(colors))
-        # active_piece = Long_piece(cols // 2, 0, random.choice(colors))
+        active_piece = random.choice(block_types)(COLS // 2, 1, random.choice(COLORS))
+        # active_piece = Long_piece(cols // 2, 0, random.choice(COLORS))
 
 
 def game_loop():
@@ -227,9 +132,9 @@ def can_rotate():
         new_row_pos = int(active_piece.row_pos - offsetX)
         if (
             new_col_pos < 0
-            or new_col_pos >= cols
+            or new_col_pos >= COLS
             or new_row_pos < 0
-            or new_row_pos >= rows
+            or new_row_pos >= ROWS
         ):
             return False
         if block_grid[new_row_pos][new_col_pos] != 0:
